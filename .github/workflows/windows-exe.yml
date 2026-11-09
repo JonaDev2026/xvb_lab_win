@@ -53,12 +53,18 @@ jobs:
           py -3 -m pip install --upgrade pip
           py -3 -m pip install pyinstaller python-mpv mutagen pillow
 
+      - name: Create Windows icon
+        shell: pwsh
+        run: |
+          py -3 -c "from PIL import Image; im=Image.open('icon.png').convert('RGBA'); im.save('icon.ico', format='ICO', sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])"
+          if (-not (Test-Path "icon.ico")) { throw "Creazione icon.ico fallita" }
+
       - name: Build XVB executable
         shell: pwsh
         run: |
           if (-not (Test-Path "icone")) { throw "Cartella icone mancante" }
           if (-not (Test-Path "fonts\static")) { throw "Cartella fonts\static mancante" }
-          py -3 -m PyInstaller --noconfirm --clean --windowed --onedir --name XVB --add-data "icone;icone" --add-data "fonts;fonts" --add-data "icon.png;." xvb_win.py
+          py -3 -m PyInstaller --noconfirm --clean --windowed --onedir --name XVB --icon "icon.ico" --add-data "icone;icone" --add-data "fonts;fonts" --add-data "icon.png;." xvb_win.py
           New-Item -ItemType Directory -Force -Path "dist\XVB\_internal" | Out-Null
           Copy-Item "build\mpv\*.dll" "dist\XVB\_internal\" -Force
           if (-not (Test-Path "dist\XVB\_internal\libmpv-2.dll")) {
