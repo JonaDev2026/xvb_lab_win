@@ -4483,7 +4483,7 @@ class TV(object):
                 return "break"
 
             def trascina_win(_e):
-                if self.ov_premuto and self.ov_trascina:
+                if self.ov_premuto and getattr(self, "ov_trascina", None):
                     self.trascina_ov()
                 return "break"
 
