@@ -2898,10 +2898,16 @@ class Elenco(tk.Text):
     exists, get_children, selection, selection_set, see..."""
 
     def __init__(self, dove, **kw):
+        # Su Windows le metriche verticali di Tk lasciano troppo spazio tra
+        # le due righe di ogni voce: mantengo Google Sans e compatto solo
+        # le dimensioni usate nell'elenco.
+        self.nome_px = 15 if sys.platform == "win32" else NOME_PX
+        self.sotto_px = 14 if sys.platform == "win32" else SOTTO_PX
+
         tk.Text.__init__(self, dove, bg=PANNELLO, fg=TESTO, bd=0, highlightthickness=0,
                          cursor="arrow", wrap="none", spacing1=0, spacing3=0,
                          insertwidth=0, padx=0, takefocus=1,
-                         font=(CARATTERE, -NOME_PX), **kw)
+                         font=(CARATTERE, -self.nome_px), **kw)
 
         self.rientro = tk.PhotoImage(width=10, height=1)
         self.rientro_zero = tk.PhotoImage(width=8, height=1)
@@ -2951,16 +2957,16 @@ class Elenco(tk.Text):
         self.tag_configure(
             "nome", foreground="#ffffff", spacing1=self.nome_sopra,
             spacing3=0 if sys.platform == "win32" else 4,
-            font=(CARATTERE, -NOME_PX, "bold")
+            font=(CARATTERE, -self.nome_px, "bold")
         )
         self.tag_configure(
             "sotto", spacing1=0,
             spacing3=0 if sys.platform == "win32" else 14,
-            font=(CARATTERE, -SOTTO_PX)
+            font=(CARATTERE, -self.sotto_px)
         )
         self.tag_configure("descrizione", foreground=GRIGIO, spacing1=0, spacing2=0, spacing3=14,
                            wrap="word", lmargin1=COLONNA, lmargin2=COLONNA, rmargin=8,
-                           font=(CARATTERE, -SOTTO_PX))
+                           font=(CARATTERE, -self.sotto_px))
         self.tag_configure("onda")
         self.tag_raise("onda")
         self.tag_raise("scelto")
@@ -3092,7 +3098,7 @@ class Elenco(tk.Text):
         """La descrizione accorciata in modo che stia in due righe."""
         larg = (self.winfo_width() if self.winfo_width() > 50 else 380) - COLONNA - 28
         if self.font_desc is None:
-            self.font_desc = tkfont.Font(root=self, font=(CARATTERE, -SOTTO_PX))
+            self.font_desc = tkfont.Font(root=self, font=(CARATTERE, -self.sotto_px))
         m = self.font_desc.measure
         righe, cur, taglio = [], "", False
         for w in testo.split():
@@ -3243,7 +3249,7 @@ class Elenco(tk.Text):
 
     def _nuovo_poster(self):
         e = tk.Label(self, bd=0, highlightthickness=0, bg=PANNELLO, fg=GRIGIO,
-                     cursor="arrow", font=(CARATTERE, -SOTTO_PX), padx=6)
+                     cursor="arrow", font=(CARATTERE, -self.sotto_px), padx=6)
         e.image = None
         e.bind("<Button-1>", lambda ev, w=e: self.clic_y(w.winfo_y() + w.winfo_height() + 6))
         e.bind("<Motion>", lambda ev, w=e: self.passa_y(w.winfo_y() + w.winfo_height() + 6))
