@@ -18,15 +18,18 @@ jobs:
           ref: ${{ github.event.release.tag_name || github.ref_name }}
 
       - name: Set version
+        id: version
         shell: pwsh
         run: |
           if ("${{ github.event_name }}" -eq "release") {
             $version = "${{ github.event.release.tag_name }}"
           } else {
-            $version = "${{ github.ref_name }}"
+            $source = Select-String -Path "xvb_win.py" -Pattern '^VERSIONE = "([^\"]+)"'
+            $version = $source.Matches[0].Groups[1].Value
           }
           $version = $version -replace '^v', ''
           "XVB_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           Write-Host "Building XVB $version"
 
       - name: Download libmpv
@@ -56,8 +59,9 @@ jobs:
           if (-not (Test-Path "icone")) { throw "Cartella icone mancante" }
           if (-not (Test-Path "fonts\static")) { throw "Cartella fonts\static mancante" }
           py -3 -m PyInstaller --noconfirm --clean --windowed --onedir --name XVB --add-data "icone;icone" --add-data "fonts;fonts" xvb_win.py
-          Copy-Item "build\mpv\*.dll" "dist\XVB\" -Force
-          if (-not (Test-Path "dist\XVB\libmpv-2.dll")) {
+          New-Item -ItemType Directory -Force -Path "dist\XVB\_internal" | Out-Null
+          Copy-Item "build\mpv\*.dll" "dist\XVB\_internal\" -Force
+          if (-not (Test-Path "dist\XVB\_internal\libmpv-2.dll")) {
             throw "libmpv-2.dll non inclusa nella build"
           }
 
@@ -81,14 +85,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/XVB-Setup-${{ env.XVB_VERSION }}.exe
-            dist/XVB-portable-${{ env.XVB_VERSION }}.zip
+            dist/XVB-Setup-${{ steps.version.outputs.version }}.exe
+            dist/XVB-portable-${{ steps.version.outputs.version }}.zip
 
       - name: Upload build artifacts
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
-          name: XVB-Windows-${{ env.XVB_VERSION }}
+          name: XVB-Windows-${{ steps.version.outputs.version }}
           path: |
-            dist/XVB-Setup-${{ env.XVB_VERSION }}.exe
-            dist/XVB-portable-${{ env.XVB_VERSION }}.zip
+            dist/XVB-Setup-${{ steps.version.outputs.version }}.exe
+            dist/XVB-portable-${{ steps.version.outputs.version }}.zip
