@@ -3066,24 +3066,24 @@ class Elenco(tk.Text):
 
 
     def _n(self, iid):
-        """Righe di testo della voce: 3, 4 se ha la riga della descrizione."""
-        return 4 if iid in self.fisici else 3
+        """Righe di testo della voce: 2, 3 se ha la riga della descrizione."""
+        return 3 if iid in self.fisici else 2
 
     def riga(self, iid):
         p = self.posto[iid]
-        return 3 * p + 1 + sum(1 for k in self.fisici if self.posto.get(k, p) < p)
+        return 2 * p + 1 + sum(1 for k in self.fisici if self.posto.get(k, p) < p)
 
     def _dove(self, r):
         """Dalla riga di testo: (indice della voce, True se e' la riga descrizione)."""
         r0, spost = r - 1, 0
         for p in sorted(self.posto[k] for k in self.fisici if k in self.posto):
-            inizio = 3 * p + spost
+            inizio = 2 * p + spost
             if r0 < inizio:
                 break
-            if r0 < inizio + 4:
+            if r0 < inizio + 3:
                 return p, r0 == inizio + 2
             spost += 1
-        return (r0 - spost) // 3, False
+        return (r0 - spost) // 2, False
 
     def _visibili(self, su, giu):
         return range(max(0, self._dove(su)[0]), min(len(self.voci), self._dove(giu)[0] + 1))
@@ -3179,7 +3179,6 @@ class Elenco(tk.Text):
         if self.desc_di is not None and self.segno == "logo" and "onda" in d["tags"]:
             desc = self.desc_di(iid) or ""
         d["desc"] = desc
-        tk.Text.insert(self, "%d.0" % r, "\n", ("stacco",))
         if desc:
             tk.Text.insert(self, "%d.0" % r, self._due_righe(desc) + "\n", ("descrizione", "zebra", "onda"))
         if self.segno == "logo":
@@ -3204,9 +3203,6 @@ class Elenco(tk.Text):
             self.tag_add("pronda", "%d.0" % r)
         self.image_create("%d.0" % (r + 1), image=sotto_img)
         self.tag_add(tinta, "%d.0" % (r + 1)); self.tag_add("sotto", "%d.0" % (r + 1))
-        rs = r + 3 if desc else r + 2
-        self.image_create("%d.0" % rs, image=self.stacco)
-        self.tag_add("stacco", "%d.0" % rs)
         if desc:
             self.fisici.add(iid)
         if self.sopra == iid:
