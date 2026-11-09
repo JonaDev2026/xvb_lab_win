@@ -3868,6 +3868,11 @@ class TV(object):
         self.root.report_callback_exception = _xvb_eccezione_tk
         imposta_font_globale(self.root)
         self.root.title("XVB v" + VERSIONE)
+        if sys.platform == "win32":
+            try:
+                self.root.iconbitmap(os.path.join(_BASE_DIR, "icon.ico"))
+            except tk.TclError:
+                _XVB_LOGGER.warning("Impossibile impostare icon.ico per la finestra")
         self.root.after(500, self._giradisco)
 
 
