@@ -2908,7 +2908,7 @@ class Elenco(tk.Text):
         # Su Windows Tk calcola le metriche verticali dei font in modo
         # diverso: riduco lo stacco tra le voci senza cambiare il font.
         self.stacco = tk.PhotoImage(
-            width=1, height=4 if sys.platform == "win32" else 12
+            width=1, height=1 if sys.platform == "win32" else 12
         )
 
 
@@ -2947,15 +2947,15 @@ class Elenco(tk.Text):
         self.tag_lower("zebra")
 
 
-        self.nome_sopra = 4 if sys.platform == "win32" else 10
+        self.nome_sopra = 0 if sys.platform == "win32" else 10
         self.tag_configure(
             "nome", foreground="#ffffff", spacing1=self.nome_sopra,
-            spacing3=2 if sys.platform == "win32" else 4,
+            spacing3=0 if sys.platform == "win32" else 4,
             font=(CARATTERE, -NOME_PX, "bold")
         )
         self.tag_configure(
             "sotto", spacing1=0,
-            spacing3=4 if sys.platform == "win32" else 14,
+            spacing3=0 if sys.platform == "win32" else 14,
             font=(CARATTERE, -SOTTO_PX)
         )
         self.tag_configure("descrizione", foreground=GRIGIO, spacing1=0, spacing2=0, spacing3=14,
