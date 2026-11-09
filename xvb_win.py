@@ -120,18 +120,36 @@ def configura_logging():
 
 
 
-_FONT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
+_BASE_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+_FONT_DIR = os.path.join(_BASE_DIR, "fonts")
 _FONT_STATIC_DIR = os.path.join(_FONT_DIR, "static")
 _FONTCONFIG_FILE = os.path.join(_FONT_DIR, "xvb-fonts.conf")
-if sys.platform == "win32" and os.path.isdir(_FONT_STATIC_DIR):
+
+
+def _carica_font_windows():
+    """Registra i font inclusi nell'app, solo per il processo XVB."""
+    if sys.platform != "win32" or not os.path.isdir(_FONT_STATIC_DIR):
+        return
+
     try:
         import ctypes
-        for _n in os.listdir(_FONT_STATIC_DIR):
-            if _n.lower().endswith((".ttf", ".otf")):
-                ctypes.windll.gdi32.AddFontResourceExW(
-                    os.path.join(_FONT_STATIC_DIR, _n), 0x10, 0)
+        from ctypes import wintypes
+
+        gdi32 = ctypes.WinDLL("gdi32", use_last_error=True)
+        aggiungi = gdi32.AddFontResourceExW
+        aggiungi.argtypes = (wintypes.LPCWSTR, wintypes.DWORD, wintypes.LPVOID)
+        aggiungi.restype = ctypes.c_int
+
+        for nome in os.listdir(_FONT_STATIC_DIR):
+            if nome.lower().endswith((".ttf", ".otf")):
+                percorso = os.path.join(_FONT_STATIC_DIR, nome)
+                risultato = aggiungi(percorso, 0x10, None)  # FR_PRIVATE
+                if risultato == 0:
+                    _XVB_LOGGER.warning(
+                        "Impossibile caricare il font Windows: %s", percorso
+                    )
     except Exception:
-        pass
+        _XVB_LOGGER.exception("Errore durante il caricamento dei font Windows")
 if sys.platform != "win32" and os.path.isdir(_FONT_STATIC_DIR):
     try:
         import xml.sax.saxutils as _xml_escape
@@ -1195,9 +1213,25 @@ def font_desktop_sistema():
     return None, "normal", "normal"
 
 def imposta_font_globale(root):
-    """Imposta Google Sans incorporato nell'app su tutti i font Tk."""
+    """Carica Google Sans incluso e lo applica a tutti i font Tk."""
     global CARATTERE, STILE_CARATTERE
-    CARATTERE = "Google Sans"
+
+    if sys.platform == "win32":
+        _carica_font_windows()
+        try:
+            famiglie = {nome.casefold() for nome in tkfont.families(root)}
+        except tk.TclError:
+            famiglie = set()
+        CARATTERE = (
+            "Google Sans" if "google sans" in famiglie else "Segoe UI"
+        )
+        if CARATTERE != "Google Sans":
+            _XVB_LOGGER.warning(
+                "Google Sans non disponibile in Tk; uso Segoe UI"
+            )
+    else:
+        CARATTERE = "Google Sans"
+
     STILE_CARATTERE = "normal"
     for nome in ("TkDefaultFont", "TkTextFont", "TkMenuFont", "TkHeadingFont",
                  "TkCaptionFont", "TkSmallCaptionFont", "TkIconFont", "TkTooltipFont"):
