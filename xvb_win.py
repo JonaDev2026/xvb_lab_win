@@ -9861,7 +9861,7 @@ class TV(object):
         finestra.grab_set()
         tk.Label(
             finestra,
-            text=_("*  System default output") + "\n" + _("GNOME manages audio routing."),
+            text=_("*  System default output") + "\n" + _("The system manages audio routing."),
             bg=PANNELLO,
             fg=TESTO,
             justify="left",
