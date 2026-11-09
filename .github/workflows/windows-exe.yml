@@ -12,10 +12,10 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - name: Checkout release source
+      - name: Checkout fixed source from main
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name || github.ref_name }}
+          ref: main
 
       - name: Set version
         id: version
@@ -56,6 +56,7 @@ jobs:
       - name: Create Windows icon
         shell: pwsh
         run: |
+          if (-not (Test-Path "icon.png")) { throw "icon.png mancante" }
           py -3 -c "from PIL import Image; im=Image.open('icon.png').convert('RGBA'); im.save('icon.ico', format='ICO', sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])"
           if (-not (Test-Path "icon.ico")) { throw "Creazione icon.ico fallita" }
 
@@ -80,17 +81,18 @@ jobs:
         run: |
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$env:XVB_VERSION" "installer\XVB.iss"
           if ($LASTEXITCODE -ne 0) { throw "Creazione installer fallita" }
+          if (-not (Test-Path "dist\XVB-Setup-$env:XVB_VERSION.exe")) { throw "Installer EXE mancante" }
 
-      - name: Attach files to GitHub Release
+      - name: Attach ONLY installer to GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/XVB-Setup-${{ steps.version.outputs.version }}.exe
 
-      - name: Upload build artifacts
+      - name: Upload installer artifact
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
-          name: XVB-Windows-${{ steps.version.outputs.version }}
+          name: XVB-Setup-${{ steps.version.outputs.version }}
           path: dist/XVB-Setup-${{ steps.version.outputs.version }}.exe
