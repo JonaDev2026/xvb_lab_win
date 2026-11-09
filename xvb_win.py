@@ -3868,11 +3868,6 @@ class TV(object):
         self.root.report_callback_exception = _xvb_eccezione_tk
         imposta_font_globale(self.root)
         self.root.title("XVB v" + VERSIONE)
-        if sys.platform == "win32":
-            try:
-                self.root.iconbitmap(os.path.join(_BASE_DIR, "icon.ico"))
-            except tk.TclError:
-                _XVB_LOGGER.warning("Impossibile impostare icon.ico per la finestra")
         self.root.after(500, self._giradisco)
 
 
@@ -3906,6 +3901,20 @@ class TV(object):
                 self.root.iconphoto(True, self.icona)
             except Exception:
                 pass
+
+        # Su Windows iconbitmap va applicato per ultimo: iconphoto può sovrascriverlo.
+        if sys.platform == "win32":
+            for percorso_icona in (
+                os.path.join(_BASE_DIR, "icon.ico"),
+                os.path.join(os.path.dirname(sys.executable), "icon.ico"),
+            ):
+                if os.path.isfile(percorso_icona):
+                    try:
+                        self.root.iconbitmap(default=percorso_icona)
+                        self.root.iconbitmap(percorso_icona)
+                        break
+                    except tk.TclError:
+                        _XVB_LOGGER.exception("Impossibile impostare l'icona Windows: %s", percorso_icona)
 
 
         self.icone, self.icone_pil = {}, {}
