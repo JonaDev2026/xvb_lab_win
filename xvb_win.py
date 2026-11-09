@@ -2898,11 +2898,11 @@ class Elenco(tk.Text):
     exists, get_children, selection, selection_set, see..."""
 
     def __init__(self, dove, **kw):
-        # Su Windows le metriche verticali di Tk lasciano troppo spazio tra
-        # le due righe di ogni voce: mantengo Google Sans e compatto solo
-        # le dimensioni usate nell'elenco.
-        self.nome_px = 15 if sys.platform == "win32" else NOME_PX
-        self.sotto_px = 14 if sys.platform == "win32" else SOTTO_PX
+        self.nome_px = NOME_PX
+        self.sotto_px = SOTTO_PX
+        # Tk su Windows aggiunge leading alle righe del Text. I valori
+        # negativi comprimono lo spazio tra nome e sottotitolo senza
+        # ridurre il corpo del font.
 
         tk.Text.__init__(self, dove, bg=PANNELLO, fg=TESTO, bd=0, highlightthickness=0,
                          cursor="arrow", wrap="none", spacing1=0, spacing3=0,
@@ -2956,11 +2956,11 @@ class Elenco(tk.Text):
         self.nome_sopra = 0 if sys.platform == "win32" else 10
         self.tag_configure(
             "nome", foreground="#ffffff", spacing1=self.nome_sopra,
-            spacing3=0 if sys.platform == "win32" else 4,
+            spacing3=-3 if sys.platform == "win32" else 4,
             font=(CARATTERE, -self.nome_px, "bold")
         )
         self.tag_configure(
-            "sotto", spacing1=0,
+            "sotto", spacing1=-3 if sys.platform == "win32" else 0,
             spacing3=0 if sys.platform == "win32" else 14,
             font=(CARATTERE, -self.sotto_px)
         )
