@@ -4469,26 +4469,61 @@ class TV(object):
 
 
         try:
-            @self.mpv.on_key_press("MBTN_LEFT_DBL")
-            def _doppio():
-                self.root.after(0, self.doppio_clic)
+            self.mpv["window-dragging"] = "no"
+        except Exception:
+            pass
 
+        if sys.platform == "win32":
+            # Su Windows i clic arrivano al frame Tk che ospita mpv.
+            # Li inoltriamo direttamente, senza dipendere dai key binding
+            # del mouse di libmpv nella finestra incorporata.
+            def clic_win(n):
+                self.ov_premuto = True
+                self.clic_schermo(n)
+                return "break"
 
+            def trascina_win(_e):
+                if self.ov_premuto and self.ov_trascina:
+                    self.trascina_ov()
+                return "break"
+
+            def rilascia_win(_e):
+                self.ov_premuto = False
+                self.ov_trascina = None
+                return "break"
+
+            self.vid1.bind(
+                "<ButtonPress-1>", lambda e: clic_win(0), add="+")
+            self.vid1.bind("<B1-Motion>", trascina_win, add="+")
+            self.vid1.bind("<ButtonRelease-1>", rilascia_win, add="+")
+            self.vid1.bind(
+                "<Double-Button-1>",
+                lambda e: (self.doppio_clic(), "break")[1],
+                add="+"
+            )
+
+            self.vid2.bind(
+                "<ButtonPress-1>", lambda e: clic_win(1), add="+")
+            self.vid2.bind("<B1-Motion>", trascina_win, add="+")
+            self.vid2.bind("<ButtonRelease-1>", rilascia_win, add="+")
+        else:
             try:
-                self.mpv["window-dragging"] = "no"
+                @self.mpv.on_key_press("MBTN_LEFT_DBL")
+                def _doppio():
+                    self.root.after(0, self.doppio_clic)
             except Exception:
                 pass
 
-
-            @self.mpv.key_binding("MBTN_LEFT")
-            def _clic(stato, *_a):
-                if stato.startswith("d"):
-                    self.ov_premuto = True
-                    self.root.after(0, self.clic_schermo, 0)
-                elif stato.startswith("u"):
-                    self.ov_premuto = False
-        except Exception:
-            pass
+            try:
+                @self.mpv.key_binding("MBTN_LEFT")
+                def _clic(stato, *_a):
+                    if stato.startswith("d"):
+                        self.ov_premuto = True
+                        self.root.after(0, self.clic_schermo, 0)
+                    elif stato.startswith("u"):
+                        self.ov_premuto = False
+            except Exception:
+                pass
         self.mpv1 = self.mpv
         for valore in ("embedded-first", "attachment"):
             try:
