@@ -1,0 +1,94 @@
+name: Windows EXE
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref_name }}
+
+      - name: Set version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "release") {
+            $version = "${{ github.event.release.tag_name }}"
+          } else {
+            $version = "${{ github.ref_name }}"
+          }
+          $version = $version -replace '^v', ''
+          "XVB_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Building XVB $version"
+
+      - name: Download libmpv
+        shell: pwsh
+        run: |
+          $url = "https://github.com/SubtitleEdit/support-files/releases/download/libmpv-2026-08-14/libmpv2-win64.zip"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\libmpv.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\libmpv.zip" -DestinationPath "$env:RUNNER_TEMP\libmpv" -Force
+          $dlls = Get-ChildItem "$env:RUNNER_TEMP\libmpv" -Filter *.dll -Recurse
+          if (-not ($dlls | Where-Object { $_.Name -eq "libmpv-2.dll" })) {
+            throw "libmpv-2.dll non trovato nell'archivio"
+          }
+          New-Item -ItemType Directory -Force -Path "build\mpv" | Out-Null
+          foreach ($dll in $dlls) {
+            Copy-Item $dll.FullName "build\mpv\$($dll.Name)" -Force
+          }
+
+      - name: Install Python dependencies
+        shell: pwsh
+        run: |
+          py -3 -m pip install --upgrade pip
+          py -3 -m pip install pyinstaller python-mpv mutagen pillow
+
+      - name: Build XVB executable
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "icone")) { throw "Cartella icone mancante" }
+          if (-not (Test-Path "fonts\static")) { throw "Cartella fonts\static mancante" }
+          py -3 -m PyInstaller --noconfirm --clean --windowed --onedir --name XVB --add-data "icone;icone" --add-data "fonts;fonts" xvb_win.py
+          Copy-Item "build\mpv\*.dll" "dist\XVB\" -Force
+          if (-not (Test-Path "dist\XVB\libmpv-2.dll")) {
+            throw "libmpv-2.dll non inclusa nella build"
+          }
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Create installer
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$env:XVB_VERSION" "installer\XVB.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Creazione installer fallita" }
+
+      - name: Create portable archive
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist\XVB\*" -DestinationPath "dist\XVB-portable-$env:XVB_VERSION.zip" -CompressionLevel Optimal
+
+      - name: Attach files to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/XVB-Setup-${{ env.XVB_VERSION }}.exe
+            dist/XVB-portable-${{ env.XVB_VERSION }}.zip
+
+      - name: Upload build artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: XVB-Windows-${{ env.XVB_VERSION }}
+          path: |
+            dist/XVB-Setup-${{ env.XVB_VERSION }}.exe
+            dist/XVB-portable-${{ env.XVB_VERSION }}.zip
