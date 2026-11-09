@@ -64,7 +64,7 @@ jobs:
         run: |
           if (-not (Test-Path "icone")) { throw "Cartella icone mancante" }
           if (-not (Test-Path "fonts\static")) { throw "Cartella fonts\static mancante" }
-          py -3 -m PyInstaller --noconfirm --clean --windowed --onedir --name XVB --icon "icon.ico" --add-data "icone;icone" --add-data "fonts;fonts" --add-data "icon.png;." xvb_win.py
+          py -3 -m PyInstaller --noconfirm --clean --windowed --onedir --name XVB --icon "icon.ico" --add-data "icone;icone" --add-data "fonts;fonts" --add-data "icon.png;." --add-data "icon.ico;." xvb_win.py
           New-Item -ItemType Directory -Force -Path "dist\XVB\_internal" | Out-Null
           Copy-Item "build\mpv\*.dll" "dist\XVB\_internal\" -Force
           if (-not (Test-Path "dist\XVB\_internal\libmpv-2.dll")) {
