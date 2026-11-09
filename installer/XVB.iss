@@ -19,7 +19,7 @@ ArchitecturesAllowed=x64
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-SetupIconFile=..\\icon.ico
+SetupIconFile=..\icon.ico
 UninstallDisplayIcon={app}\{#AppExeName}
 
 [Languages]
