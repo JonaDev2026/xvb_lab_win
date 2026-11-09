@@ -861,7 +861,7 @@ def copertina_url(u):
     return os.path.join(COPERTINE_URL, hashlib.md5(u.encode("utf-8")).hexdigest() + ".jpg")
 FILE_COLORI = os.path.join(CASA, ".cache", "xvb", "colori.json")
 FILE_TAG = os.path.join(CASA, ".cache", "xvb", "tag.json")
-RIGA_ELENCO = 64
+RIGA_ELENCO = 42 if sys.platform == "win32" else 64
 LOGO_L, LOGO_A = 72, 56
 COLONNA = LOGO_L
 CACHE_ANTEPRIME = os.path.join(CASA, ".cache", "xvb", "anteprime")
