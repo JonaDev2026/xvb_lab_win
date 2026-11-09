@@ -2905,7 +2905,11 @@ class Elenco(tk.Text):
 
         self.rientro = tk.PhotoImage(width=10, height=1)
         self.rientro_zero = tk.PhotoImage(width=8, height=1)
-        self.stacco = tk.PhotoImage(width=1, height=12)
+        # Su Windows Tk calcola le metriche verticali dei font in modo
+        # diverso: riduco lo stacco tra le voci senza cambiare il font.
+        self.stacco = tk.PhotoImage(
+            width=1, height=4 if sys.platform == "win32" else 12
+        )
 
 
         self.colonna = tk.Canvas(self, bg=PANNELLO, highlightthickness=0, bd=0,
@@ -2943,10 +2947,17 @@ class Elenco(tk.Text):
         self.tag_lower("zebra")
 
 
-        self.nome_sopra = 10
-        self.tag_configure("nome", foreground="#ffffff", spacing1=self.nome_sopra, spacing3=4,
-                           font=(CARATTERE, -NOME_PX, "bold"))
-        self.tag_configure("sotto", spacing1=0, spacing3=14, font=(CARATTERE, -SOTTO_PX))
+        self.nome_sopra = 4 if sys.platform == "win32" else 10
+        self.tag_configure(
+            "nome", foreground="#ffffff", spacing1=self.nome_sopra,
+            spacing3=2 if sys.platform == "win32" else 4,
+            font=(CARATTERE, -NOME_PX, "bold")
+        )
+        self.tag_configure(
+            "sotto", spacing1=0,
+            spacing3=4 if sys.platform == "win32" else 14,
+            font=(CARATTERE, -SOTTO_PX)
+        )
         self.tag_configure("descrizione", foreground=GRIGIO, spacing1=0, spacing2=0, spacing3=14,
                            wrap="word", lmargin1=COLONNA, lmargin2=COLONNA, rmargin=8,
                            font=(CARATTERE, -SOTTO_PX))
